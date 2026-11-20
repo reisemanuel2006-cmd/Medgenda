@@ -1,0 +1,2266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedAgenda - Sistema de Agendamento de Consultas</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        medical: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            200: '#bae0fd',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#035485',
+                            800: '#07476f',
+                            900: '#0c3b5e',
+                        },
+                        tealmed: {
+                            500: '#0d9488',
+                            600: '#0f766e',
+                        },
+                        cyanclient: {
+                            50: '#ecfeff',
+                            100: '#cffafe',
+                            200: '#a5f3fc',
+                            500: '#06b6d4',
+                            600: '#0891b2',
+                            700: '#0e7490',
+                        },
+                        emeraldmed: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            200: '#a7f3d0',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                        },
+                        amethystadmin: {
+                            50: '#faf5ff',
+                            100: '#f3e8ff',
+                            200: '#e9d5ff',
+                            500: '#9333ea',
+                            600: '#7e22ce',
+                            700: '#6b21a8',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-medical-500 selection:text-white">
+
+    <!-- ==================== TELA DE LOGIN INICIAL (PRIMEIRO ACESSO - UC02) ==================== -->
+    <div id="auth-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-cyanclient-50/40 to-amethystadmin-50/40 p-4">
+        <div class="bg-white border border-slate-200 rounded-3xl shadow-xl w-full max-w-md p-6 sm:p-8 space-y-6">
+            <!-- Brand Header -->
+            <div class="text-center space-y-2">
+                <div id="login-brand-icon" class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyanclient-600 to-cyanclient-500 flex items-center justify-center text-white shadow-lg mx-auto transition-all duration-300">
+                    <i class="fa-solid fa-notes-medical text-2xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Med<span id="login-brand-accent" class="text-cyanclient-600 transition-colors duration-300">Agenda</span></h1>
+                <p class="text-xs text-slate-500">Selecione seu perfil e entre com suas credenciais</p>
+            </div>
+
+            <!-- Formulário de Login (UC02) -->
+            <form onsubmit="handleInitialLogin(event)" class="space-y-4 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1.5">Tipo de Acesso (Perfil)</label>
+                    <div class="grid grid-cols-3 gap-2" id="login-role-selector">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="login-role" value="paciente" checked onchange="updateLoginRoleTheme('paciente')" class="peer sr-only">
+                            <div class="flex flex-col items-center justify-center p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 peer-checked:bg-cyanclient-50 peer-checked:border-cyanclient-500 peer-checked:text-cyanclient-700 transition">
+                                <i class="fa-solid fa-user text-sm mb-1"></i>
+                                <span class="text-[11px] font-bold">Paciente</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="login-role" value="medico" onchange="updateLoginRoleTheme('medico')" class="peer sr-only">
+                            <div class="flex flex-col items-center justify-center p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 peer-checked:bg-emeraldmed-50 peer-checked:border-emeraldmed-500 peer-checked:text-emeraldmed-700 transition">
+                                <i class="fa-solid fa-user-doctor text-sm mb-1"></i>
+                                <span class="text-[11px] font-bold">Médico</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="login-role" value="admin" onchange="updateLoginRoleTheme('admin')" class="peer sr-only">
+                            <div class="flex flex-col items-center justify-center p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 peer-checked:bg-amethystadmin-50 peer-checked:border-amethystadmin-500 peer-checked:text-amethystadmin-700 transition">
+                                <i class="fa-solid fa-user-shield text-sm mb-1"></i>
+                                <span class="text-[11px] font-bold">Admin</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">E-mail de Acesso</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-envelope absolute left-3 top-2.5 text-slate-400"></i>
+                        <input type="email" id="init-login-email" required value="lucas@email.com" placeholder="seu@email.com" class="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-3 py-2.5 focus:bg-white focus:ring-2 focus:ring-cyanclient-500 focus:outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Senha</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-3 top-2.5 text-slate-400"></i>
+                        <input type="password" id="init-login-senha" required value="123456" placeholder="••••••••" class="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-3 py-2.5 focus:bg-white focus:ring-2 focus:ring-cyanclient-500 focus:outline-none">
+                    </div>
+                </div>
+                <button type="submit" id="init-login-submit-btn" class="w-full bg-cyanclient-600 hover:bg-cyanclient-700 text-white font-semibold py-3 rounded-xl transition shadow-md flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>Entrar como Paciente</span>
+                </button>
+            </form>
+
+            <!-- Credenciais de Demonstração -->
+            <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-3 text-[11px] text-slate-500 space-y-1">
+                <p class="font-semibold text-slate-700 flex items-center space-x-1.5 mb-1">
+                    <i class="fa-solid fa-circle-info text-slate-400"></i>
+                    <span>Contas cadastradas para teste:</span>
+                </p>
+                <p><span class="text-cyanclient-600 font-semibold">Paciente:</span> lucas@email.com</p>
+                <p><span class="text-emeraldmed-600 font-semibold">Médico:</span> roberto@medagenda.com</p>
+                <p><span class="text-amethystadmin-600 font-semibold">Admin:</span> admin@medagenda.com</p>
+                <p class="text-[10px] text-slate-400 pt-0.5">Senha padrão: <code class="font-mono text-slate-600">123456</code></p>
+            </div>
+
+            <div class="text-center pt-1">
+                <button type="button" onclick="openRegisterModal()" class="text-xs font-semibold text-cyanclient-600 hover:text-cyanclient-700 hover:underline">
+                    Não possui conta? Cadastre-se como Paciente (UC01)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SHELL PRINCIPAL DO SISTEMA ==================== -->
+    <div id="app-shell" class="hidden min-h-screen flex flex-col">
+
+    <!-- Header Navigation -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- Logo & Brand -->
+                <div class="flex items-center space-x-3">
+                    <div id="brand-logo-box" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyanclient-600 to-cyanclient-500 flex items-center justify-center text-white shadow-md transition-colors duration-300">
+                        <i class="fa-solid font-bold fa-notes-medical text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="text-xl font-bold text-slate-900 tracking-tight">Med<span id="brand-logo-accent" class="text-cyanclient-600 transition-colors duration-300">Agenda</span></span>
+                        <span id="brand-version-badge" class="hidden sm:inline-block text-xs bg-cyanclient-50 text-cyanclient-600 font-medium px-2 py-0.5 rounded-full ml-2 border border-cyanclient-200 transition-colors duration-300">v2.5</span>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs (Dynamic per Role) -->
+                <nav id="nav-menu" class="hidden md:flex space-x-1 items-center">
+                    <!-- Populated via JS -->
+                </nav>
+
+                <!-- Profile Switcher & User Status -->
+                <div class="flex items-center space-x-3">
+                    <!-- Current User Display / Profile Button -->
+                    <div id="user-info-btn" class="flex items-center space-x-2 cursor-pointer p-1.5 rounded-lg hover:bg-slate-100 transition" onclick="openProfileModal()">
+                        <img id="user-avatar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80" alt="Avatar" class="w-8 h-8 rounded-full border-2 border-cyanclient-500 object-cover transition-colors duration-300">
+                        <div class="hidden lg:block text-left text-xs">
+                            <p id="user-name" class="font-semibold text-slate-800">Carregando...</p>
+                            <p id="user-role-badge" class="text-cyanclient-600 font-semibold capitalize transition-colors duration-300">Paciente</p>
+                        </div>
+                    </div>
+
+                    <!-- Botão Direto de Logout (Fluxo Tradicional) -->
+                    <button onclick="logoutUser()" title="Sair da Conta" class="bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold px-3 py-2 rounded-lg border border-rose-200 flex items-center space-x-1.5 transition">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        <span class="hidden sm:inline">Sair</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Nav Bar -->
+        <div id="mobile-nav" class="md:hidden flex justify-around border-t border-slate-200 bg-white py-2 px-2 text-xs text-slate-600">
+            <!-- Populated via JS -->
+        </div>
+    </header>
+
+    <!-- Alert / Toast Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <!-- ==================== PACIENTE VIEWS ==================== -->
+        <!-- View: Paciente - Agendamento (UC04 - UC08) -->
+        <section id="view-paciente-agendar" class="view-panel space-y-6">
+            <!-- Hero Banner (Azul Ciano) -->
+            <div class="bg-gradient-to-r from-cyanclient-600 to-cyanclient-500 rounded-2xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden">
+                <div class="relative z-10 max-w-2xl">
+                    <h1 class="text-2xl sm:text-3xl font-bold tracking-tight mb-2">Agende sua consulta médica com facilidade</h1>
+                    <p class="text-cyanclient-50 text-sm sm:text-base">Encontre os melhores especialistas, consulte horários em tempo real e confirme seu agendamento de forma rápida e segura.</p>
+                </div>
+                <div class="absolute -right-8 -bottom-10 opacity-20 text-white pointer-events-none">
+                    <i class="fa-solid fa-calendar-check text-[180px]"></i>
+                </div>
+            </div>
+
+            <!-- Booking Stepper & Container -->
+            <div class="bg-white border border-cyanclient-100 rounded-2xl shadow-sm p-6">
+                <!-- Search & Filters (UC04 / UC05) -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Especialidade (UC04)</label>
+                        <select id="filter-especialidade" onchange="filterDoctors()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-cyanclient-500 focus:outline-none">
+                            <option value="">Todas as Especialidades</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Buscar por Nome do Médico (UC05)</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-cyanclient-500 text-sm"></i>
+                            <input type="text" id="filter-nome-medico" oninput="filterDoctors()" placeholder="Ex: Dr. Roberto..." class="w-full bg-slate-50 border border-slate-300 rounded-lg pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-cyanclient-500 focus:outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Data Desejada</label>
+                        <input type="date" id="filter-data-agendamento" onchange="renderDoctorList()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-cyanclient-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Doctors List / Selection (UC05, UC06, UC07, UC08) -->
+                <div class="border-t border-slate-100 pt-6">
+                    <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center space-x-2">
+                        <i class="fa-solid fa-user-doctor text-cyanclient-600"></i>
+                        <span>Médicos Disponíveis</span>
+                    </h2>
+                    
+                    <div id="doctors-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- View: Paciente - Minhas Consultas & Histórico (UC09, UC10, UC11) -->
+        <section id="view-paciente-consultas" class="view-panel space-y-6 hidden">
+            <div class="bg-gradient-to-r from-cyanclient-600 to-cyanclient-500 rounded-2xl p-6 text-white shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold">Minhas Consultas</h1>
+                    <p class="text-sm text-cyanclient-50">Acompanhe seus agendamentos futuros e consulte seu histórico médico.</p>
+                </div>
+                <!-- Tabs UC09 vs UC11 -->
+                <div class="flex bg-cyanclient-700/40 p-1 rounded-xl">
+                    <button id="tab-btn-futuras" onclick="switchPatientConsultasTab('futuras')" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-white shadow-sm text-cyanclient-700 transition">Agendadas & Futuras</button>
+                    <button id="tab-btn-historico" onclick="switchPatientConsultasTab('historico')" class="px-4 py-1.5 text-xs font-semibold rounded-lg text-white hover:bg-white/10 transition">Histórico Anterior (UC11)</button>
+                </div>
+            </div>
+
+            <!-- Banner de Lembretes de Consultas Próximas -->
+            <div id="patient-reminders-banner" class="hidden"></div>
+
+            <!-- Consultas Grid / List -->
+            <div id="patient-consultas-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Populated via JS -->
+            </div>
+        </section>
+
+
+        <!-- ==================== MÉDICO VIEWS ==================== -->
+        <!-- View: Médico - Agenda & Atendimentos (UC12, UC13, UC18, UC19) -->
+        <section id="view-medico-agenda" class="view-panel space-y-6 hidden">
+            <div class="bg-gradient-to-r from-emeraldmed-600 to-emeraldmed-500 rounded-2xl p-6 text-white shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold">Agenda Médica (UC12)</h1>
+                    <p class="text-sm text-emeraldmed-50">Gerencie seus agendamentos, conclua atendimentos e consulte a lista de pacientes.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <input type="date" id="medico-agenda-date" onchange="renderMedicoAgenda()" class="bg-white text-slate-800 border border-emeraldmed-200 rounded-lg px-3 py-1.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emeraldmed-200">
+                    <button onclick="document.getElementById('medico-agenda-date').value=''; renderMedicoAgenda();" class="bg-emeraldmed-700/60 hover:bg-emeraldmed-700 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold transition">
+                        Todas as Datas
+                    </button>
+                    <select id="medico-status-filter" onchange="renderMedicoAgenda()" class="bg-white text-slate-800 border border-emeraldmed-200 rounded-lg px-3 py-1.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emeraldmed-200">
+                        <option value="todos">Todos os Status (UC13)</option>
+                        <option value="Agendada">Agendadas</option>
+                        <option value="Realizada">Realizadas</option>
+                        <option value="Cancelada">Canceladas</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Resumo Rápido do Médico -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white border border-emeraldmed-100 rounded-2xl p-4 shadow-sm flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-emeraldmed-50 text-emeraldmed-600 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-calendar-day"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">Total Filtrado</p>
+                        <h3 id="med-stat-total" class="text-lg font-bold text-slate-900">0</h3>
+                    </div>
+                </div>
+                <div class="bg-white border border-emeraldmed-100 rounded-2xl p-4 shadow-sm flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">Agendadas</p>
+                        <h3 id="med-stat-agendadas" class="text-lg font-bold text-slate-900">0</h3>
+                    </div>
+                </div>
+                <div class="bg-white border border-emeraldmed-100 rounded-2xl p-4 shadow-sm flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-check-double"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">Realizadas</p>
+                        <h3 id="med-stat-realizadas" class="text-lg font-bold text-slate-900">0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agenda Cards List -->
+            <div id="medico-agenda-list" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <!-- Populated by JS -->
+            </div>
+        </section>
+
+        <!-- View: Médico - Gerenciar Horários (UC14 - UC17) -->
+        <section id="view-medico-horarios" class="view-panel space-y-6 hidden">
+            <div class="bg-white border border-emeraldmed-100 rounded-2xl p-6 shadow-sm">
+                <div class="border-l-4 border-emeraldmed-500 pl-3 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <h1 class="text-xl font-bold text-slate-900 mb-1">Gerenciar Disponibilidade e Horários (UC14)</h1>
+                        <p class="text-xs text-slate-500">Cadastre novas vagas de atendimento, bloqueie turnos ou cancele disponibilidade.</p>
+                    </div>
+                    <button type="button" onclick="generateWeekSlots()" class="bg-emeraldmed-50 hover:bg-emeraldmed-100 text-emeraldmed-700 border border-emeraldmed-200 text-xs font-semibold px-3 py-2 rounded-xl transition flex items-center space-x-1.5 self-start">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Gerar Agenda (Próximos 3 Dias)</span>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Cadastrar Horários Form (UC15) -->
+                    <div class="bg-emeraldmed-50/50 border border-emeraldmed-200 rounded-xl p-4">
+                        <h2 class="text-sm font-bold text-emeraldmed-700 mb-3 flex items-center space-x-2">
+                            <i class="fa-solid fa-plus-circle text-emeraldmed-600"></i>
+                            <span>Cadastrar Novos Horários (UC15)</span>
+                        </h2>
+                        <form onsubmit="handleCadastrarHorarios(event)" class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Data</label>
+                                <input type="date" id="new-slot-date" required class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-emeraldmed-500">
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Hora Início</label>
+                                    <input type="time" id="new-slot-start" required value="08:00" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-emeraldmed-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Hora Fim</label>
+                                    <input type="time" id="new-slot-end" required value="12:00" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-emeraldmed-500">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Duração por Consulta (min)</label>
+                                <select id="new-slot-duration" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-emeraldmed-500">
+                                    <option value="30">30 minutos</option>
+                                    <option value="45">45 minutos</option>
+                                    <option value="60">60 minutos</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="w-full bg-emeraldmed-600 hover:bg-emeraldmed-700 text-white text-xs font-semibold py-2 rounded-lg transition shadow-sm">
+                                Gerar Horários Disponíveis
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Slots Grid & Control (UC16, UC17) -->
+                    <div class="lg:col-span-2 space-y-4">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-sm font-bold text-slate-800">Horários Configurados</h2>
+                            <input type="date" id="filter-medico-slots-date" onchange="renderMedicoSlots()" class="bg-white border border-emeraldmed-200 rounded-lg px-2.5 py-1 text-xs focus:ring-2 focus:ring-emeraldmed-500">
+                        </div>
+                        <div id="medico-slots-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ==================== ADMINISTRADOR VIEWS ==================== -->
+        <!-- View: Admin - Gerenciar Usuários (UC20 - UC23) -->
+        <section id="view-admin-usuarios" class="view-panel space-y-6 hidden">
+            <div class="bg-gradient-to-r from-amethystadmin-600 to-amethystadmin-500 rounded-2xl p-6 text-white shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold">Gerenciamento de Usuários (UC20)</h1>
+                    <p class="text-sm text-amethystadmin-50">Cadastre, edite e controle o acesso dos usuários do sistema.</p>
+                </div>
+                <button onclick="openNewUserModal()" class="bg-white hover:bg-amethystadmin-50 text-amethystadmin-700 px-4 py-2 rounded-lg text-xs font-bold shadow flex items-center space-x-2 transition">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <span>Cadastrar Usuário (UC21)</span>
+                </button>
+            </div>
+
+            <!-- Filter & Search -->
+            <div class="bg-white border border-amethystadmin-100 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row gap-3">
+                <input type="text" id="search-admin-user" oninput="renderAdminUsers()" placeholder="Buscar por Nome, CPF ou E-mail..." class="flex-grow bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amethystadmin-500">
+                <select id="filter-admin-user-role" onchange="renderAdminUsers()" class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amethystadmin-500">
+                    <option value="">Todos os Perfis</option>
+                    <option value="paciente">Paciente</option>
+                    <option value="medico">Médico</option>
+                    <option value="admin">Administrador</option>
+                </select>
+            </div>
+
+            <!-- Users Table -->
+            <div class="bg-white border border-amethystadmin-100 rounded-2xl shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-600">
+                        <thead class="bg-amethystadmin-50/70 border-b border-amethystadmin-100 uppercase font-semibold text-amethystadmin-700">
+                            <tr>
+                                <th class="p-3">Nome / E-mail</th>
+                                <th class="p-3">CPF</th>
+                                <th class="p-3">Perfil</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-users-table-body" class="divide-y divide-slate-100">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- View: Admin - Gerenciar Médicos & Especialidades (UC24, UC25) -->
+        <section id="view-admin-medicos-especialidades" class="view-panel space-y-6 hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Gerenciar Especialidades (UC25) -->
+                <div class="bg-white border border-amethystadmin-100 rounded-2xl p-5 shadow-sm space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-base font-bold text-slate-900">Especialidades (UC25)</h2>
+                        <button onclick="openEspecialidadeModal()" class="text-xs bg-amethystadmin-50 text-amethystadmin-600 font-semibold px-2.5 py-1 rounded-lg border border-amethystadmin-200 hover:bg-amethystadmin-100 transition">+ Nova</button>
+                    </div>
+                    <ul id="admin-especialidades-list" class="divide-y divide-slate-100 max-h-96 overflow-y-auto custom-scrollbar">
+                        <!-- Populated via JS -->
+                    </ul>
+                </div>
+
+                <!-- Gerenciar Médicos (UC24) -->
+                <div class="lg:col-span-2 bg-white border border-amethystadmin-100 rounded-2xl p-5 shadow-sm space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-base font-bold text-slate-900">Médicos Cadastrados (UC24)</h2>
+                        <button onclick="openMedicoModal()" class="text-xs bg-amethystadmin-600 text-white font-semibold px-3 py-1.5 rounded-lg hover:bg-amethystadmin-700 transition">+ Novo Médico</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-600">
+                            <thead class="bg-amethystadmin-50/70 border-b border-amethystadmin-100 uppercase font-semibold text-amethystadmin-700">
+                                <tr>
+                                    <th class="p-3">Médico</th>
+                                    <th class="p-3">CRM</th>
+                                    <th class="p-3">Especialidade</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3 text-right">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-medicos-table-body" class="divide-y divide-slate-100">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- View: Admin - Visualizar Agendamentos (UC26) & Relatórios (UC27) -->
+        <section id="view-admin-consultas-relatorios" class="view-panel space-y-6 hidden">
+            <!-- Relatórios Estatísticos (UC27) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white border border-amethystadmin-100 rounded-2xl p-4 shadow-sm flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-amethystadmin-50 text-amethystadmin-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-calendar-check"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">Total de Consultas</p>
+                        <h3 id="stat-total-consultas" class="text-xl font-bold text-slate-900">0</h3>
+                    </div>
+                </div>
+                <div class="bg-white border border-amethystadmin-100 rounded-2xl p-4 shadow-sm flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-user-check"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">Agendamentos Ativos</p>
+                        <h3 id="stat-consultas-ativas" class="text-xl font-bold text-slate-900">0</h3>
+                    </div>
+                </div>
+                <div class="bg-white border border-amethystadmin-100 rounded-2xl p-4 shadow-sm flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-user-doctor"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">Médicos Ativos</p>
+                        <h3 id="stat-medicos-ativos" class="text-xl font-bold text-slate-900">0</h3>
+                    </div>
+                </div>
+                <div class="bg-white border border-amethystadmin-100 rounded-2xl p-4 shadow-sm flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-ban"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">Cancelamentos</p>
+                        <h3 id="stat-cancelamentos" class="text-xl font-bold text-slate-900">0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agendamentos Master Table & Filters (UC26) -->
+            <div class="bg-white border border-amethystadmin-100 rounded-2xl shadow-sm p-5 space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-4">
+                    <h2 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                        <i class="fa-solid fa-list-check text-amethystadmin-600"></i>
+                        <span>Todas as Consultas Registradas (UC26)</span>
+                    </h2>
+                    <button onclick="exportToCSV()" class="text-xs bg-amethystadmin-50 hover:bg-amethystadmin-100 text-amethystadmin-700 font-semibold px-3 py-1.5 rounded-lg border border-amethystadmin-200 transition flex items-center space-x-1">
+                        <i class="fa-solid fa-file-csv"></i>
+                        <span>Exportar Dados CSV (UC27)</span>
+                    </button>
+                </div>
+
+                <!-- Multi-Filters (UC26) -->
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">Status</label>
+                        <select id="admin-filter-status" onchange="renderAdminConsultas()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs">
+                            <option value="">Todos os Status</option>
+                            <option value="Agendada">Agendada</option>
+                            <option value="Realizada">Realizada</option>
+                            <option value="Cancelada">Cancelada</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">Médico</label>
+                        <select id="admin-filter-medico" onchange="renderAdminConsultas()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs">
+                            <!-- Populated via JS -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">Especialidade</label>
+                        <select id="admin-filter-especialidade" onchange="renderAdminConsultas()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs">
+                            <!-- Populated via JS -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">Data da Consulta</label>
+                        <input type="date" id="admin-filter-data" onchange="renderAdminConsultas()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs">
+                    </div>
+                </div>
+
+                <!-- Consultas Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-600">
+                        <thead class="bg-amethystadmin-50/70 border-b border-amethystadmin-100 uppercase font-semibold text-amethystadmin-700">
+                            <tr>
+                                <th class="p-3">Data / Hora</th>
+                                <th class="p-3">Paciente</th>
+                                <th class="p-3">Médico</th>
+                                <th class="p-3">Especialidade</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3 text-right">Gerenciar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-consultas-table-body" class="divide-y divide-slate-100">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4">
+            Sistema de Agendamento de Consultas Médicas &copy; 2026 — UC01 a UC27 Completo
+        </div>
+    </footer>
+
+    </div> <!-- Fim #app-shell -->
+
+    <!-- ==================== MODAIS ==================== -->
+
+    <!-- Modal UC01: Criar Conta -->
+    <div id="modal-register" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative">
+            <button onclick="closeModal('modal-register')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 mb-1">Criar Nova Conta (UC01)</h2>
+            <p class="text-xs text-slate-500 mb-4">Preencha seus dados para acessar o agendamento online.</p>
+
+            <form onsubmit="handleRegister(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Nome Completo *</label>
+                    <input type="text" id="reg-nome" required placeholder="Ex: Ana Maria Souza" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-medical-500">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">CPF *</label>
+                        <input type="text" id="reg-cpf" required placeholder="000.000.000-00" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-medical-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Data Nasc. *</label>
+                        <input type="date" id="reg-nasc" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-medical-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">E-mail *</label>
+                    <input type="email" id="reg-email" required placeholder="exemplo@email.com" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-medical-500">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Telefone / WhatsApp</label>
+                    <input type="text" id="reg-telefone" placeholder="(11) 99999-9999" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-medical-500">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Senha *</label>
+                    <input type="password" id="reg-senha" required placeholder="******" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-medical-500">
+                </div>
+                <button type="submit" class="w-full bg-medical-600 hover:bg-medical-700 text-white font-semibold py-2.5 rounded-lg transition shadow-md mt-2">
+                    Cadastrar Minha Conta
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal UC03: Gerenciar Perfil -->
+    <div id="modal-profile" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative">
+            <button onclick="closeModal('modal-profile')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 mb-1">Meu Perfil (UC03)</h2>
+            <p class="text-xs text-slate-500 mb-4">Atualize seus dados cadastrais.</p>
+
+            <form onsubmit="handleUpdateProfile(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Nome Completo</label>
+                    <input type="text" id="prof-nome" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-medical-500">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">E-mail</label>
+                    <input type="email" id="prof-email" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-medical-500">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Telefone</label>
+                    <input type="text" id="prof-telefone" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-medical-500">
+                </div>
+                <button type="submit" class="w-full bg-medical-600 hover:bg-medical-700 text-white font-semibold py-2.5 rounded-lg transition shadow-md mt-2">
+                    Salvar Alterações
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal UC08 & UC07: Confirmação de Agendamento -->
+    <div id="modal-confirm-booking" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative">
+            <button onclick="closeModal('modal-confirm-booking')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 mb-1">Confirmar Agendamento (UC08)</h2>
+            <p class="text-xs text-slate-500 mb-4">Revise os detalhes antes de confirmar sua consulta.</p>
+
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2 text-xs mb-4">
+                <div class="flex justify-between border-b border-slate-200 pb-2">
+                    <span class="text-slate-500">Médico:</span>
+                    <span id="book-modal-medico" class="font-bold text-slate-800"></span>
+                </div>
+                <div class="flex justify-between border-b border-slate-200 pb-2">
+                    <span class="text-slate-500">Especialidade:</span>
+                    <span id="book-modal-esp" class="font-semibold text-cyanclient-600"></span>
+                </div>
+                <div class="flex justify-between border-b border-slate-200 pb-2">
+                    <span class="text-slate-500">Data & Hora:</span>
+                    <span id="book-modal-datetime" class="font-bold text-slate-800"></span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">Paciente:</span>
+                    <span id="book-modal-paciente" class="font-medium text-slate-700"></span>
+                </div>
+            </div>
+
+            <div class="flex space-x-3">
+                <button onclick="closeModal('modal-confirm-booking')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 rounded-lg text-xs transition">
+                    Cancelar
+                </button>
+                <button onclick="executeBooking()" class="flex-1 bg-cyanclient-600 hover:bg-cyanclient-700 text-white font-semibold py-2 rounded-lg text-xs transition shadow-md">
+                    Confirmar Consulta
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Prévia de Lembrete por E-mail -->
+    <div id="modal-email-reminder-preview" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 relative">
+            <button onclick="closeModal('modal-email-reminder-preview')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="flex items-center space-x-2 mb-1">
+                <span class="w-8 h-8 rounded-lg bg-cyanclient-100 text-cyanclient-700 flex items-center justify-center">
+                    <i class="fa-solid fa-envelope-open-text"></i>
+                </span>
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Lembrete Enviado por E-mail</h2>
+                    <p class="text-[11px] text-slate-500">Simulação da mensagem entregue na caixa de entrada do paciente</p>
+                </div>
+            </div>
+
+            <div class="mt-4 border border-slate-200 rounded-xl overflow-hidden text-xs">
+                <div class="bg-slate-50 px-4 py-2.5 border-b border-slate-200 space-y-1 text-[11px]">
+                    <p><span class="text-slate-400 font-semibold">De:</span> <span class="text-slate-700">MedAgenda Notificações &lt;lembretes@medagenda.com&gt;</span></p>
+                    <p><span class="text-slate-400 font-semibold">Para:</span> <span id="email-prev-to" class="text-cyanclient-700 font-semibold"></span></p>
+                    <p><span class="text-slate-400 font-semibold">Assunto:</span> <span id="email-prev-subject" class="text-slate-800 font-bold"></span></p>
+                </div>
+                <div class="p-4 bg-white space-y-3 text-slate-600 leading-relaxed">
+                    <p>Olá, <strong id="email-prev-paciente" class="text-slate-800"></strong>!</p>
+                    <p>Este é um lembrete automático da sua consulta agendada no <strong>MedAgenda</strong>:</p>
+                    <div class="bg-cyanclient-50/70 border border-cyanclient-200 rounded-xl p-3 space-y-1 text-slate-700">
+                        <p><i class="fa-solid fa-user-doctor text-cyanclient-600 w-4"></i> <strong>Profissional:</strong> <span id="email-prev-medico"></span></p>
+                        <p><i class="fa-solid fa-stethoscope text-cyanclient-600 w-4"></i> <strong>Especialidade:</strong> <span id="email-prev-esp"></span></p>
+                        <p><i class="fa-regular fa-calendar text-cyanclient-600 w-4"></i> <strong>Data:</strong> <span id="email-prev-data"></span></p>
+                        <p><i class="fa-regular fa-clock text-cyanclient-600 w-4"></i> <strong>Horário:</strong> <span id="email-prev-hora"></span></p>
+                    </div>
+                    <p class="text-[11px] text-slate-400">Caso precise remarcar ou cancelar, acesse o portal MedAgenda com antecedência.</p>
+                </div>
+            </div>
+
+            <div class="mt-4 flex justify-end">
+                <button onclick="closeModal('modal-email-reminder-preview')" class="bg-cyanclient-600 hover:bg-cyanclient-700 text-white font-semibold px-4 py-2 rounded-lg text-xs transition shadow-sm">
+                    Fechar Prévia
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal UC18 / UC19: Visualizar Detalhes do Paciente (Médico) -->
+    <div id="modal-paciente-info" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative">
+            <button onclick="closeModal('modal-paciente-info')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 mb-1">Informações do Paciente (UC19)</h2>
+            <p class="text-xs text-slate-500 mb-4">Dados cadastrais e histórico de consultas.</p>
+
+            <div class="space-y-3 text-xs">
+                <div class="flex items-center space-x-3 p-3 bg-emeraldmed-50/60 rounded-xl border border-emeraldmed-200">
+                    <div class="w-10 h-10 rounded-full bg-emeraldmed-100 text-emeraldmed-700 font-bold flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div>
+                        <h3 id="pac-modal-nome" class="font-bold text-slate-800 text-sm"></h3>
+                        <p id="pac-modal-email" class="text-slate-500"></p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <div>
+                        <span class="text-slate-400 block text-[10px]">CPF</span>
+                        <span id="pac-modal-cpf" class="font-semibold text-slate-700"></span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block text-[10px]">TELEFONE</span>
+                        <span id="pac-modal-tel" class="font-semibold text-slate-700"></span>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-800 mb-2">Histórico de Atendimentos</h4>
+                    <div id="pac-modal-historico" class="space-y-1 max-h-40 overflow-y-auto custom-scrollbar border border-slate-200 rounded-lg p-2">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Admin: Cadastrar Usuário (UC21) / Editar (UC22) -->
+    <div id="modal-admin-user" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative">
+            <button onclick="closeModal('modal-admin-user')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h2 id="modal-admin-user-title" class="text-xl font-bold text-slate-900 mb-1">Cadastrar Usuário (UC21)</h2>
+            <p class="text-xs text-slate-500 mb-4">Insira os dados cadastrais do novo usuário.</p>
+
+            <form onsubmit="handleSaveAdminUser(event)" class="space-y-3 text-xs">
+                <input type="hidden" id="admin-user-id">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Nome Completo *</label>
+                    <input type="text" id="admin-user-nome" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amethystadmin-500">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">E-mail *</label>
+                    <input type="email" id="admin-user-email" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amethystadmin-500">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">CPF *</label>
+                        <input type="text" id="admin-user-cpf" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amethystadmin-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Perfil (Role) *</label>
+                        <select id="admin-user-role" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amethystadmin-500">
+                            <option value="paciente">Paciente</option>
+                            <option value="medico">Médico</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-amethystadmin-600 hover:bg-amethystadmin-700 text-white font-semibold py-2.5 rounded-lg transition shadow-md mt-2">
+                    Salvar Usuário
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Admin: Cadastrar Especialidade (UC25) -->
+    <div id="modal-admin-especialidade" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 relative">
+            <button onclick="closeModal('modal-admin-especialidade')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 mb-1">Nova Especialidade (UC25)</h2>
+            <p class="text-xs text-slate-500 mb-4">Adicione uma especialidade médica ao catálogo.</p>
+
+            <form onsubmit="handleSaveEspecialidade(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Nome da Especialidade *</label>
+                    <input type="text" id="esp-nome" required placeholder="Ex: Cardiologia" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amethystadmin-500">
+                </div>
+                <button type="submit" class="w-full bg-amethystadmin-600 hover:bg-amethystadmin-700 text-white font-semibold py-2.5 rounded-lg transition shadow-md mt-2">
+                    Cadastrar Especialidade
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Admin: Cadastrar Médico (UC24) -->
+    <div id="modal-admin-medico" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative">
+            <button onclick="closeModal('modal-admin-medico')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 mb-1">Cadastrar Médico (UC24)</h2>
+            <p class="text-xs text-slate-500 mb-4">Vincule um perfil profissional ao corpo médico.</p>
+
+            <form onsubmit="handleSaveMedico(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Nome do Médico *</label>
+                    <input type="text" id="med-nome" required placeholder="Ex: Dr. Carlos Eduardo" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amethystadmin-500">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">CRM *</label>
+                        <input type="text" id="med-crm" required placeholder="CRM/SP 123456" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amethystadmin-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Especialidade *</label>
+                        <select id="med-esp" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amethystadmin-500">
+                            <!-- Populated via JS -->
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">E-mail *</label>
+                    <input type="email" id="med-email" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amethystadmin-500">
+                </div>
+                <button type="submit" class="w-full bg-amethystadmin-600 hover:bg-amethystadmin-700 text-white font-semibold py-2.5 rounded-lg transition shadow-md mt-2">
+                    Cadastrar Médico
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ==================== JAVASCRIPT APPLICATION LOGIC ==================== -->
+    <script>
+        // --- INITIAL IN-MEMORY DATA STORE ---
+        const state = {
+            currentUser: null,
+            activeViewId: null,
+            users: [
+                { id: 'u1', name: 'Lucas Silva', cpf: '111.222.333-44', email: 'lucas@email.com', phone: '(11) 98888-1111', role: 'paciente', active: true, avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80' },
+                { id: 'u2', name: 'Mariana Costa', cpf: '222.333.444-55', email: 'mariana@email.com', phone: '(11) 97777-2222', role: 'paciente', active: true, avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80' },
+                { id: 'u3', name: 'Dr. Roberto Santos', cpf: '333.444.555-66', email: 'roberto@medagenda.com', phone: '(11) 96666-3333', role: 'medico', active: true, crm: 'CRM/SP 145890', especialidadeId: 'esp1', avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=100&auto=format&fit=crop&q=80' },
+                { id: 'u4', name: 'Dra. Vanessa Lima', cpf: '444.555.666-77', email: 'vanessa@medagenda.com', phone: '(11) 95555-4444', role: 'medico', active: true, crm: 'CRM/SP 198234', especialidadeId: 'esp2', avatar: 'https://images.unsplash.com/photo-1594824813566-88855ce78905?w=100&auto=format&fit=crop&q=80' },
+                { id: 'u5', name: 'Dr. Fernando Rocha', cpf: '555.666.777-88', email: 'fernando@medagenda.com', phone: '(11) 94444-5555', role: 'medico', active: true, crm: 'CRM/SP 112233', especialidadeId: 'esp3', avatar: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=100&auto=format&fit=crop&q=80' },
+                { id: 'u6', name: 'Administrador do Sistema', cpf: '000.000.000-00', email: 'admin@medagenda.com', phone: '(11) 90000-0000', role: 'admin', active: true, avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80' }
+            ],
+            especialidades: [
+                { id: 'esp1', nome: 'Cardiologia' },
+                { id: 'esp2', nome: 'Dermatologia' },
+                { id: 'esp3', nome: 'Ortopedia' },
+                { id: 'esp4', nome: 'Pediatria' },
+                { id: 'esp5', nome: 'Ginecologia' }
+            ],
+            slots: [
+                { id: 'slot1', medicoId: 'u3', data: getTodayDateString(0), hora: '09:00', status: 'ocupado' },
+                { id: 'slot2', medicoId: 'u3', data: getTodayDateString(0), hora: '10:00', status: 'disponivel' },
+                { id: 'slot3', medicoId: 'u3', data: getTodayDateString(0), hora: '11:00', status: 'disponivel' },
+                { id: 'slot4', medicoId: 'u3', data: getTodayDateString(1), hora: '14:00', status: 'disponivel' },
+                { id: 'slot5', medicoId: 'u3', data: getTodayDateString(1), hora: '15:00', status: 'bloqueado' },
+                { id: 'slot6', medicoId: 'u4', data: getTodayDateString(0), hora: '14:00', status: 'disponivel' },
+                { id: 'slot7', medicoId: 'u4', data: getTodayDateString(0), hora: '15:30', status: 'disponivel' },
+                { id: 'slot8', medicoId: 'u5', data: getTodayDateString(1), hora: '08:30', status: 'disponivel' }
+            ],
+            consultas: [
+                {
+                    id: 'c1',
+                    slotId: 'slot1',
+                    pacienteId: 'u1',
+                    medicoId: 'u3',
+                    especialidadeId: 'esp1',
+                    data: getTodayDateString(0),
+                    hora: '09:00',
+                    status: 'Agendada',
+                    lembreteAtivo: true,
+                    antecedenciaLembrete: '1h',
+                    criadoEm: new Date().toISOString()
+                },
+                {
+                    id: 'c2',
+                    slotId: 'slot-med-extra',
+                    pacienteId: 'u2',
+                    medicoId: 'u3',
+                    especialidadeId: 'esp1',
+                    data: getTodayDateString(0),
+                    hora: '14:30',
+                    status: 'Agendada',
+                    lembreteAtivo: true,
+                    antecedenciaLembrete: '24h',
+                    criadoEm: new Date().toISOString()
+                },
+                {
+                    id: 'c0',
+                    slotId: 'slot-hist-1',
+                    pacienteId: 'u1',
+                    medicoId: 'u4',
+                    especialidadeId: 'esp2',
+                    data: getTodayDateString(-5),
+                    hora: '14:30',
+                    status: 'Realizada',
+                    lembreteAtivo: false,
+                    antecedenciaLembrete: '24h',
+                    criadoEm: new Date().toISOString()
+                }
+            ],
+            pendingBooking: null
+        };
+
+        // Helper Date Generator
+        function getTodayDateString(daysOffset = 0) {
+            const d = new Date();
+            d.setDate(d.getDate() + daysOffset);
+            return d.toISOString().split('T')[0];
+        }
+
+        // System Initialization
+        window.onload = function() {
+            document.getElementById('filter-data-agendamento').value = getTodayDateString(0);
+            document.getElementById('medico-agenda-date').value = getTodayDateString(0);
+            document.getElementById('filter-medico-slots-date').value = getTodayDateString(0);
+            document.getElementById('new-slot-date').value = getTodayDateString(0);
+            
+            showAuthScreen();
+        };
+
+        // ==================== AUTH & NAVIGATION SHELL ====================
+
+        function showAuthScreen() {
+            state.currentUser = null;
+            state.activeViewId = null;
+            document.getElementById('app-shell').classList.add('hidden');
+            document.getElementById('auth-screen').classList.remove('hidden');
+        }
+
+        function enterApp(user) {
+            state.currentUser = user;
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('app-shell').classList.remove('hidden');
+            updateUserInterface();
+        }
+
+        function logoutUser() {
+            showToast('Sessão encerrada com segurança.', 'info');
+            showAuthScreen();
+        }
+
+        function updateUserInterface() {
+            const user = state.currentUser;
+            if (!user) return;
+
+            // Update Header User Info
+            const avatarEl = document.getElementById('user-avatar');
+            const nameEl = document.getElementById('user-name');
+            const roleBadgeEl = document.getElementById('user-role-badge');
+            const brandLogoBox = document.getElementById('brand-logo-box');
+            const brandLogoAccent = document.getElementById('brand-logo-accent');
+            const brandVersionBadge = document.getElementById('brand-version-badge');
+
+            avatarEl.src = user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80';
+            nameEl.innerText = user.name;
+
+            // Theme & Navigation config per role
+            let navItems = [];
+            let roleLabel = '';
+
+            if (user.role === 'paciente') {
+                roleLabel = 'Paciente';
+                avatarEl.className = 'w-8 h-8 rounded-full border-2 border-cyanclient-500 object-cover transition-colors duration-300';
+                roleBadgeEl.className = 'text-cyanclient-600 font-semibold capitalize transition-colors duration-300';
+                brandLogoBox.className = 'w-10 h-10 rounded-xl bg-gradient-to-tr from-cyanclient-600 to-cyanclient-500 flex items-center justify-center text-white shadow-md transition-colors duration-300';
+                brandLogoAccent.className = 'text-cyanclient-600 transition-colors duration-300';
+                brandVersionBadge.className = 'hidden sm:inline-block text-xs bg-cyanclient-50 text-cyanclient-600 font-medium px-2 py-0.5 rounded-full ml-2 border border-cyanclient-200 transition-colors duration-300';
+
+                navItems = [
+                    { id: 'view-paciente-agendar', label: 'Agendar Consulta', icon: 'fa-calendar-plus' },
+                    { id: 'view-paciente-consultas', label: 'Minhas Consultas', icon: 'fa-clipboard-list' }
+                ];
+            } else if (user.role === 'medico') {
+                roleLabel = 'Médico';
+                avatarEl.className = 'w-8 h-8 rounded-full border-2 border-emeraldmed-500 object-cover transition-colors duration-300';
+                roleBadgeEl.className = 'text-emeraldmed-600 font-semibold capitalize transition-colors duration-300';
+                brandLogoBox.className = 'w-10 h-10 rounded-xl bg-gradient-to-tr from-emeraldmed-600 to-emeraldmed-500 flex items-center justify-center text-white shadow-md transition-colors duration-300';
+                brandLogoAccent.className = 'text-emeraldmed-600 transition-colors duration-300';
+                brandVersionBadge.className = 'hidden sm:inline-block text-xs bg-emeraldmed-50 text-emeraldmed-600 font-medium px-2 py-0.5 rounded-full ml-2 border border-emeraldmed-200 transition-colors duration-300';
+
+                navItems = [
+                    { id: 'view-medico-agenda', label: 'Minha Agenda', icon: 'fa-stethoscope' },
+                    { id: 'view-medico-horarios', label: 'Gerenciar Horários', icon: 'fa-clock' }
+                ];
+            } else if (user.role === 'admin') {
+                roleLabel = 'Administrador';
+                avatarEl.className = 'w-8 h-8 rounded-full border-2 border-amethystadmin-500 object-cover transition-colors duration-300';
+                roleBadgeEl.className = 'text-amethystadmin-600 font-semibold capitalize transition-colors duration-300';
+                brandLogoBox.className = 'w-10 h-10 rounded-xl bg-gradient-to-tr from-amethystadmin-600 to-amethystadmin-500 flex items-center justify-center text-white shadow-md transition-colors duration-300';
+                brandLogoAccent.className = 'text-amethystadmin-600 transition-colors duration-300';
+                brandVersionBadge.className = 'hidden sm:inline-block text-xs bg-amethystadmin-50 text-amethystadmin-600 font-medium px-2 py-0.5 rounded-full ml-2 border border-amethystadmin-200 transition-colors duration-300';
+
+                navItems = [
+                    { id: 'view-admin-usuarios', label: 'Usuários', icon: 'fa-users' },
+                    { id: 'view-admin-medicos-especialidades', label: 'Médicos & Especialidades', icon: 'fa-user-doctor' },
+                    { id: 'view-admin-consultas-relatorios', label: 'Consultas & Relatórios', icon: 'fa-chart-pie' }
+                ];
+            }
+
+            roleBadgeEl.innerText = roleLabel;
+
+            // Populate Desktop & Mobile Menus
+            const navMenu = document.getElementById('nav-menu');
+            const mobileNav = document.getElementById('mobile-nav');
+            navMenu.innerHTML = '';
+            mobileNav.innerHTML = '';
+
+            navItems.forEach(item => {
+                navMenu.innerHTML += `
+                    <button data-view="${item.id}" onclick="switchView('${item.id}')" class="nav-tab-btn px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center space-x-2 transition text-slate-600 hover:bg-slate-100">
+                        <i class="fa-solid ${item.icon}"></i>
+                        <span>${item.label}</span>
+                    </button>
+                `;
+                mobileNav.innerHTML += `
+                    <button data-view="${item.id}" onclick="switchView('${item.id}')" class="mobile-tab-btn flex-1 py-1.5 px-2 rounded-lg flex flex-col items-center justify-center space-y-0.5 font-semibold text-slate-600 transition">
+                        <i class="fa-solid ${item.icon} text-sm"></i>
+                        <span class="text-[10px] truncate max-w-[110px]">${item.label}</span>
+                    </button>
+                `;
+            });
+
+            // Populate shared selects & views
+            populateEspecialidadeSelects();
+            populateMedicoSelects();
+
+            if (user.role === 'paciente') {
+                renderDoctorList();
+                renderPatientConsultas();
+            } else if (user.role === 'medico') {
+                renderMedicoAgenda();
+                renderMedicoSlots();
+            } else if (user.role === 'admin') {
+                renderAdminUsers();
+                renderAdminMedicosAndEspecialidades();
+                renderAdminConsultas();
+                renderAdminStats();
+            }
+
+            // Activate default view for role if none active or invalid for role
+            const validIds = navItems.map(i => i.id);
+            const targetView = validIds.includes(state.activeViewId) ? state.activeViewId : navItems[0].id;
+            switchView(targetView);
+        }
+
+        function switchView(viewId) {
+            state.activeViewId = viewId;
+            const role = state.currentUser ? state.currentUser.role : 'paciente';
+
+            // Hide all views
+            document.querySelectorAll('.view-panel').forEach(panel => {
+                panel.classList.add('hidden');
+            });
+
+            // Show target view
+            const activePanel = document.getElementById(viewId);
+            if (activePanel) {
+                activePanel.classList.remove('hidden');
+            }
+
+            // Active styling based on role
+            let activeDesktopClass = 'bg-cyanclient-50 text-cyanclient-700 border border-cyanclient-200';
+            let activeMobileClass = 'text-cyanclient-700 bg-cyanclient-50';
+            if (role === 'medico') {
+                activeDesktopClass = 'bg-emeraldmed-50 text-emeraldmed-700 border border-emeraldmed-200';
+                activeMobileClass = 'text-emeraldmed-700 bg-emeraldmed-50';
+            } else if (role === 'admin') {
+                activeDesktopClass = 'bg-amethystadmin-50 text-amethystadmin-700 border border-amethystadmin-200';
+                activeMobileClass = 'text-amethystadmin-700 bg-amethystadmin-50';
+            }
+
+            document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+                if (btn.getAttribute('data-view') === viewId) {
+                    btn.className = `nav-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition ${activeDesktopClass}`;
+                } else {
+                    btn.className = 'nav-tab-btn px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center space-x-2 transition text-slate-600 hover:bg-slate-100';
+                }
+            });
+
+            document.querySelectorAll('.mobile-tab-btn').forEach(btn => {
+                if (btn.getAttribute('data-view') === viewId) {
+                    btn.className = `mobile-tab-btn flex-1 py-1.5 px-2 rounded-lg flex flex-col items-center justify-center space-y-0.5 font-bold transition ${activeMobileClass}`;
+                } else {
+                    btn.className = 'mobile-tab-btn flex-1 py-1.5 px-2 rounded-lg flex flex-col items-center justify-center space-y-0.5 font-semibold text-slate-500 transition';
+                }
+            });
+
+            // Refresh view data on switch
+            if (viewId === 'view-paciente-agendar') renderDoctorList();
+            if (viewId === 'view-paciente-consultas') renderPatientConsultas();
+            if (viewId === 'view-medico-agenda') renderMedicoAgenda();
+            if (viewId === 'view-medico-horarios') renderMedicoSlots();
+            if (viewId === 'view-admin-usuarios') renderAdminUsers();
+            if (viewId === 'view-admin-medicos-especialidades') renderAdminMedicosAndEspecialidades();
+            if (viewId === 'view-admin-consultas-relatorios') {
+                renderAdminConsultas();
+                renderAdminStats();
+            }
+        }
+
+        function updateLoginRoleTheme(role) {
+            const iconBox = document.getElementById('login-brand-icon');
+            const accent = document.getElementById('login-brand-accent');
+            const submitBtn = document.getElementById('init-login-submit-btn');
+            const emailInput = document.getElementById('init-login-email');
+            const senhaInput = document.getElementById('init-login-senha');
+
+            if (role === 'paciente') {
+                iconBox.className = 'w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyanclient-600 to-cyanclient-500 flex items-center justify-center text-white shadow-lg mx-auto transition-all duration-300';
+                accent.className = 'text-cyanclient-600 transition-colors duration-300';
+                submitBtn.className = 'w-full bg-cyanclient-600 hover:bg-cyanclient-700 text-white font-semibold py-3 rounded-xl transition shadow-md flex items-center justify-center space-x-2';
+                submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i><span>Entrar como Paciente</span>';
+                emailInput.value = 'lucas@email.com';
+                senhaInput.value = '123456';
+            } else if (role === 'medico') {
+                iconBox.className = 'w-14 h-14 rounded-2xl bg-gradient-to-tr from-emeraldmed-600 to-emeraldmed-500 flex items-center justify-center text-white shadow-lg mx-auto transition-all duration-300';
+                accent.className = 'text-emeraldmed-600 transition-colors duration-300';
+                submitBtn.className = 'w-full bg-emeraldmed-600 hover:bg-emeraldmed-700 text-white font-semibold py-3 rounded-xl transition shadow-md flex items-center justify-center space-x-2';
+                submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i><span>Entrar como Médico</span>';
+                emailInput.value = 'roberto@medagenda.com';
+                senhaInput.value = '123456';
+            } else if (role === 'admin') {
+                iconBox.className = 'w-14 h-14 rounded-2xl bg-gradient-to-tr from-amethystadmin-600 to-amethystadmin-500 flex items-center justify-center text-white shadow-lg mx-auto transition-all duration-300';
+                accent.className = 'text-amethystadmin-600 transition-colors duration-300';
+                submitBtn.className = 'w-full bg-amethystadmin-600 hover:bg-amethystadmin-700 text-white font-semibold py-3 rounded-xl transition shadow-md flex items-center justify-center space-x-2';
+                submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i><span>Entrar como Administrador</span>';
+                emailInput.value = 'admin@medagenda.com';
+                senhaInput.value = '123456';
+            }
+        }
+
+        function handleInitialLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('init-login-email').value.trim().toLowerCase();
+            const selectedRole = document.querySelector('input[name="login-role"]:checked')?.value;
+
+            const found = state.users.find(u => u.email.toLowerCase() === email);
+            if (!found) {
+                showToast('E-mail ou credenciais inválidas! (UC02-FA01)', 'error');
+                return;
+            }
+            if (selectedRole && found.role !== selectedRole) {
+                showToast(`Esta conta não pertence ao perfil ${selectedRole.toUpperCase()} selecionado!`, 'error');
+                return;
+            }
+            if (!found.active) {
+                showToast('Usuário desativado pelo administrador! (UC02-FA03)', 'error');
+                return;
+            }
+
+            enterApp(found);
+            showToast(`Bem-vindo(a), ${found.name}! (UC02)`, 'success');
+            if (found.role === 'paciente') {
+                checkUpcomingAppointmentReminders(found.id);
+            }
+        }
+
+
+        // ==================== PACIENTE LOGIC (UC04 - UC11) ====================
+
+        function populateEspecialidadeSelects() {
+            const selects = [document.getElementById('filter-especialidade'), document.getElementById('admin-filter-especialidade')];
+            selects.forEach(sel => {
+                if (!sel) return;
+                const currentVal = sel.value;
+                sel.innerHTML = '<option value="">Todas as Especialidades</option>';
+                state.especialidades.forEach(e => {
+                    sel.innerHTML += `<option value="${e.id}">${e.nome}</option>`;
+                });
+                sel.value = currentVal;
+            });
+        }
+
+        function populateMedicoSelects() {
+            const sel = document.getElementById('admin-filter-medico');
+            if (!sel) return;
+            const currentVal = sel.value;
+            sel.innerHTML = '<option value="">Todos os Médicos</option>';
+            state.users.filter(u => u.role === 'medico').forEach(m => {
+                sel.innerHTML += `<option value="${m.id}">${m.name}</option>`;
+            });
+            sel.value = currentVal;
+        }
+
+        function filterDoctors() {
+            renderDoctorList();
+        }
+
+        function renderDoctorList() {
+            const container = document.getElementById('doctors-cards-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const selectedEsp = document.getElementById('filter-especialidade').value;
+            const searchName = document.getElementById('filter-nome-medico').value.toLowerCase();
+            const selectedDate = document.getElementById('filter-data-agendamento').value;
+
+            const doctors = state.users.filter(u => {
+                if (u.role !== 'medico' || !u.active) return false;
+                if (selectedEsp && u.especialidadeId !== selectedEsp) return false;
+                if (searchName && !u.name.toLowerCase().includes(searchName)) return false;
+                return true;
+            });
+
+            if (doctors.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12 text-slate-400">
+                        <i class="fa-solid fa-user-slash text-4xl mb-2"></i>
+                        <p class="text-sm">Nenhum médico encontrado com os filtros selecionados (FA01).</p>
+                    </div>`;
+                return;
+            }
+
+            doctors.forEach(doc => {
+                const espObj = state.especialidades.find(e => e.id === doc.especialidadeId);
+                const availableSlots = state.slots.filter(s => s.medicoId === doc.id && s.data === selectedDate && s.status === 'disponivel');
+
+                let slotsHTML = '';
+                if (availableSlots.length > 0) {
+                    slotsHTML = availableSlots.map(s => `
+                        <button onclick="initiateBooking('${doc.id}', '${s.id}', '${s.data}', '${s.hora}')" class="bg-cyanclient-50 hover:bg-cyanclient-600 hover:text-white border border-cyanclient-200 text-cyanclient-700 font-semibold text-xs py-1.5 px-2.5 rounded-lg transition">
+                            ${s.hora}
+                        </button>
+                    `).join('');
+                } else {
+                    slotsHTML = `<p class="text-xs text-slate-400 italic col-span-full">Sem horários livres nesta data (UC06-FA01).</p>`;
+                }
+
+                container.innerHTML += `
+                    <div class="bg-white border border-cyanclient-100 rounded-xl p-5 shadow-sm hover:shadow-md transition space-y-4">
+                        <div class="flex items-center space-x-3">
+                            <img src="${doc.avatar}" class="w-12 h-12 rounded-full object-cover border-2 border-cyanclient-200" alt="${doc.name}">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-sm">${doc.name}</h3>
+                                <p class="text-xs text-cyanclient-600 font-medium">${espObj ? espObj.nome : 'Geral'}</p>
+                                <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded">${doc.crm}</span>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-slate-100 pt-3">
+                            <span class="text-[11px] font-semibold text-slate-500 block mb-2">Horários Disponíveis (${selectedDate || 'Hoje'}):</span>
+                            <div class="grid grid-cols-3 gap-2">
+                                ${slotsHTML}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Initiate Booking Confirmation (UC07)
+        function initiateBooking(medicoId, slotId, data, hora) {
+            const doc = state.users.find(u => u.id === medicoId);
+            const espObj = state.especialidades.find(e => e.id === doc.especialidadeId);
+
+            state.pendingBooking = { medicoId, slotId, data, hora, pacienteId: state.currentUser.id, especialidadeId: doc.especialidadeId };
+
+            document.getElementById('book-modal-medico').innerText = doc.name;
+            document.getElementById('book-modal-esp').innerText = espObj ? espObj.nome : '-';
+            document.getElementById('book-modal-datetime').innerText = `${data} às ${hora}`;
+            document.getElementById('book-modal-paciente').innerText = state.currentUser.name;
+
+            openModal('modal-confirm-booking');
+        }
+
+        // Confirm & Execute Agendamento (UC08)
+        function executeBooking() {
+            if (!state.pendingBooking) return;
+
+            const { slotId, medicoId, pacienteId, especialidadeId, data, hora } = state.pendingBooking;
+            const slot = state.slots.find(s => s.id === slotId);
+
+            if (!slot || slot.status !== 'disponivel') {
+                showToast('Este horário acabou de ser ocupado ou bloqueado! Selecione outro. (UC08-FA01)', 'error');
+                closeModal('modal-confirm-booking');
+                renderDoctorList();
+                return;
+            }
+
+            slot.status = 'ocupado';
+
+            const newConsulta = {
+                id: 'c_' + Date.now(),
+                slotId,
+                pacienteId,
+                medicoId,
+                especialidadeId,
+                data,
+                hora,
+                status: 'Agendada',
+                lembreteAtivo: true,
+                antecedenciaLembrete: '24h',
+                criadoEm: new Date().toISOString()
+            };
+
+            state.consultas.push(newConsulta);
+            closeModal('modal-confirm-booking');
+            showToast(`Consulta agendada! Lembrete por e-mail ativado para ${state.currentUser.email}.`, 'success');
+
+            renderDoctorList();
+            renderPatientConsultas();
+        }
+
+        // Cancelar Consulta pelo Paciente (UC10)
+        function cancelConsulta(consultaId) {
+            const consulta = state.consultas.find(c => c.id === consultaId);
+            if (!consulta) return;
+
+            if (consulta.status !== 'Agendada') {
+                showToast('Apenas consultas agendadas podem ser canceladas (UC10-FA01).', 'error');
+                return;
+            }
+
+            consulta.status = 'Cancelada';
+            consulta.lembreteAtivo = false;
+
+            // Libera o horário novamente na agenda do médico
+            const slot = state.slots.find(s => s.id === consulta.slotId);
+            if (slot) {
+                slot.status = 'disponivel';
+            }
+
+            showToast('Consulta cancelada com sucesso! O horário voltou a ficar disponível. (UC10)', 'info');
+            renderPatientConsultas();
+            renderDoctorList();
+            renderMedicoAgenda();
+            renderMedicoSlots();
+            renderAdminConsultas();
+            renderAdminStats();
+        }
+
+        // Patient Consultas View (UC09, UC10, UC11)
+        let currentPatientTab = 'futuras';
+        function switchPatientConsultasTab(tab) {
+            currentPatientTab = tab;
+            document.getElementById('tab-btn-futuras').className = tab === 'futuras' ? 'px-4 py-1.5 text-xs font-semibold rounded-lg bg-white shadow-sm text-cyanclient-700 transition' : 'px-4 py-1.5 text-xs font-semibold rounded-lg text-white hover:bg-white/10 transition';
+            document.getElementById('tab-btn-historico').className = tab === 'historico' ? 'px-4 py-1.5 text-xs font-semibold rounded-lg bg-white shadow-sm text-cyanclient-700 transition' : 'px-4 py-1.5 text-xs font-semibold rounded-lg text-white hover:bg-white/10 transition';
+            renderPatientConsultas();
+        }
+
+        function renderPatientConsultas() {
+            const container = document.getElementById('patient-consultas-container');
+            const bannerContainer = document.getElementById('patient-reminders-banner');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const today = getTodayDateString(0);
+            const tomorrow = getTodayDateString(1);
+            const myConsultas = state.consultas.filter(c => c.pacienteId === state.currentUser.id);
+
+            // Banner de Lembretes Próximos (Hoje ou Amanhã)
+            const upcomingReminders = myConsultas.filter(c => c.status === 'Agendada' && c.lembreteAtivo && (c.data === today || c.data === tomorrow));
+            if (bannerContainer) {
+                if (upcomingReminders.length > 0 && currentPatientTab === 'futuras') {
+                    const nextC = upcomingReminders[0];
+                    const nextDoc = state.users.find(u => u.id === nextC.medicoId);
+                    const diaLabel = nextC.data === today ? 'HOJE' : 'AMANHÃ';
+                    bannerContainer.classList.remove('hidden');
+                    bannerContainer.innerHTML = `
+                        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+                            <div class="flex items-start sm:items-center space-x-3">
+                                <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                                    <i class="fa-solid fa-envelope-circle-check text-base"></i>
+                                </div>
+                                <div>
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span class="text-xs font-bold text-amber-800 uppercase tracking-wide">Lembrete por E-mail (${diaLabel})</span>
+                                        <span class="bg-amber-200/80 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full">Envio ${nextC.antecedenciaLembrete || '24h'} antes</span>
+                                    </div>
+                                    <p class="text-xs text-amber-900 mt-0.5">
+                                        Notificação programada para <strong>${state.currentUser.email}</strong> sobre sua consulta com <strong>${nextDoc ? nextDoc.name : 'Médico'}</strong> em <strong>${nextC.data} às ${nextC.hora}</strong>.
+                                    </p>
+                                </div>
+                            </div>
+                            <button onclick="sendTestReminder('${nextC.id}')" class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-3 py-2 rounded-xl transition shadow-sm shrink-0 flex items-center space-x-1.5">
+                                <i class="fa-solid fa-paper-plane"></i>
+                                <span>Enviar e Ver E-mail</span>
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    bannerContainer.classList.add('hidden');
+                    bannerContainer.innerHTML = '';
+                }
+            }
+
+            const filtered = myConsultas.filter(c => {
+                if (currentPatientTab === 'futuras') {
+                    return c.data >= today && c.status === 'Agendada';
+                } else {
+                    return c.data < today || c.status !== 'Agendada';
+                }
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-12 text-slate-400"><i class="fa-solid fa-folder-open text-4xl mb-2"></i><p class="text-sm">Nenhuma consulta encontrada nesta seção (UC09-FA01 / UC11-FA01).</p></div>`;
+                return;
+            }
+
+            filtered.forEach(c => {
+                const doc = state.users.find(u => u.id === c.medicoId);
+                const esp = state.especialidades.find(e => e.id === c.especialidadeId);
+
+                let statusBadge = '';
+                if (c.status === 'Agendada') statusBadge = '<span class="bg-cyanclient-100 text-cyanclient-700 text-[10px] font-bold px-2 py-0.5 rounded">Agendada</span>';
+                else if (c.status === 'Realizada') statusBadge = '<span class="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded">Realizada</span>';
+                else statusBadge = '<span class="bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded">Cancelada</span>';
+
+                const isReminderOn = c.lembreteAtivo !== false;
+                const reminderControlHTML = c.status === 'Agendada' ? `
+                    <div class="bg-slate-50 border border-slate-200/80 rounded-lg p-2.5 space-y-2 text-xs">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <i class="fa-solid ${isReminderOn ? 'fa-envelope text-cyanclient-600' : 'fa-envelope-open text-slate-400'}"></i>
+                                <div>
+                                    <span class="font-semibold text-slate-700 block text-[11px]">Lembrete por E-mail</span>
+                                    <span class="text-[10px] text-slate-500 block truncate max-w-[150px]">${state.currentUser.email}</span>
+                                </div>
+                            </div>
+                            <button onclick="toggleConsultaReminder('${c.id}')" class="px-2.5 py-1 rounded-lg text-[10px] font-bold transition ${isReminderOn ? 'bg-cyanclient-100 text-cyanclient-800 hover:bg-cyanclient-200' : 'bg-slate-200 text-slate-600 hover:bg-slate-300'}">
+                                ${isReminderOn ? 'Ativado' : 'Desativado'}
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between pt-1.5 border-t border-slate-200/60">
+                            <select onchange="updateReminderTime('${c.id}', this.value)" ${!isReminderOn ? 'disabled' : ''} class="text-[10px] text-slate-600 font-medium bg-white border border-slate-200 rounded px-1.5 py-0.5 focus:outline-none">
+                                <option value="30min" ${c.antecedenciaLembrete === '30min' ? 'selected' : ''}>Enviar 30 min antes</option>
+                                <option value="1h" ${c.antecedenciaLembrete === '1h' ? 'selected' : ''}>Enviar 1 hora antes</option>
+                                <option value="24h" ${(c.antecedenciaLembrete === '24h' || !c.antecedenciaLembrete) ? 'selected' : ''}>Enviar 24 horas antes</option>
+                            </select>
+                            <button onclick="sendTestReminder('${c.id}')" class="text-[10px] font-semibold text-cyanclient-600 hover:text-cyanclient-800 hover:underline flex items-center space-x-1">
+                                <i class="fa-solid fa-paper-plane text-[9px]"></i>
+                                <span>Enviar agora</span>
+                            </button>
+                        </div>
+                    </div>
+                ` : '';
+
+                container.innerHTML += `
+                    <div class="bg-white border border-cyanclient-100 rounded-xl p-4 shadow-sm flex flex-col justify-between space-y-3">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm">${doc ? doc.name : 'Médico'}</h4>
+                                <p class="text-xs text-cyanclient-600 font-medium">${esp ? esp.nome : '-'}</p>
+                            </div>
+                            ${statusBadge}
+                        </div>
+
+                        <div class="bg-cyanclient-50/40 p-2.5 rounded-lg border border-cyanclient-100 text-xs flex justify-between">
+                            <span><i class="fa-regular fa-calendar text-cyanclient-600 mr-1"></i> ${c.data}</span>
+                            <span><i class="fa-regular fa-clock text-cyanclient-600 mr-1"></i> ${c.hora}</span>
+                        </div>
+
+                        ${reminderControlHTML}
+
+                        ${c.status === 'Agendada' ? `
+                            <button onclick="cancelConsulta('${c.id}')" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold py-1.5 rounded-lg transition border border-rose-200">
+                                Cancelar Consulta (UC10)
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+            });
+        }
+
+        function toggleConsultaReminder(consultaId) {
+            const c = state.consultas.find(item => item.id === consultaId);
+            if (!c) return;
+            c.lembreteAtivo = !c.lembreteAtivo;
+            showToast(`Lembrete por e-mail ${c.lembreteAtivo ? 'ativado' : 'desativado'} (${state.currentUser.email}).`, 'info');
+            renderPatientConsultas();
+        }
+
+        function updateReminderTime(consultaId, antecedencia) {
+            const c = state.consultas.find(item => item.id === consultaId);
+            if (!c) return;
+            c.antecedenciaLembrete = antecedencia;
+            showToast(`Envio do lembrete por e-mail ajustado para ${antecedencia} antes.`, 'info');
+            renderPatientConsultas();
+        }
+
+        function sendTestReminder(consultaId) {
+            const c = state.consultas.find(item => item.id === consultaId);
+            if (!c) return;
+            const doc = state.users.find(u => u.id === c.medicoId);
+            const esp = state.especialidades.find(e => e.id === c.especialidadeId);
+
+            document.getElementById('email-prev-to').innerText = state.currentUser.email;
+            document.getElementById('email-prev-subject').innerText = `Lembrete de Consulta: ${doc ? doc.name : 'Médico'} em ${c.data} às ${c.hora}`;
+            document.getElementById('email-prev-paciente').innerText = state.currentUser.name;
+            document.getElementById('email-prev-medico').innerText = doc ? doc.name : 'Médico';
+            document.getElementById('email-prev-esp').innerText = esp ? esp.nome : 'Consulta Médica';
+            document.getElementById('email-prev-data').innerText = c.data;
+            document.getElementById('email-prev-hora').innerText = c.hora;
+
+            openModal('modal-email-reminder-preview');
+            showToast(`E-mail de lembrete enviado para ${state.currentUser.email}!`, 'success');
+        }
+
+        function checkUpcomingAppointmentReminders(pacienteId) {
+            const today = getTodayDateString(0);
+            const tomorrow = getTodayDateString(1);
+            const pac = state.users.find(u => u.id === pacienteId);
+            const upcoming = state.consultas.filter(c => c.pacienteId === pacienteId && c.status === 'Agendada' && c.lembreteAtivo !== false && (c.data === today || c.data === tomorrow));
+            if (upcoming.length > 0) {
+                const c = upcoming[0];
+                const doc = state.users.find(u => u.id === c.medicoId);
+                setTimeout(() => {
+                    showToast(`📧 Lembrete por e-mail (${pac ? pac.email : ''}): Consulta com ${doc ? doc.name : 'Médico'} ${c.data === today ? 'Hoje' : 'Amanhã'} às ${c.hora}`, 'info');
+                }, 900);
+            }
+        }
+
+
+        // ==================== MÉDICO LOGIC (UC12 - UC19) ====================
+
+        function renderMedicoAgenda() {
+            const container = document.getElementById('medico-agenda-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const dateFilter = document.getElementById('medico-agenda-date').value;
+            const statusFilter = document.getElementById('medico-status-filter').value;
+
+            const myConsultas = state.consultas.filter(c => {
+                if (c.medicoId !== state.currentUser.id) return false;
+                if (dateFilter && c.data !== dateFilter) return false;
+                if (statusFilter !== 'todos' && c.status !== statusFilter) return false;
+                return true;
+            });
+
+            // Atualiza métricas rápidas do médico
+            const totalEl = document.getElementById('med-stat-total');
+            const agendadasEl = document.getElementById('med-stat-agendadas');
+            const realizadasEl = document.getElementById('med-stat-realizadas');
+            if (totalEl) totalEl.innerText = myConsultas.length;
+            if (agendadasEl) agendadasEl.innerText = myConsultas.filter(c => c.status === 'Agendada').length;
+            if (realizadasEl) realizadasEl.innerText = myConsultas.filter(c => c.status === 'Realizada').length;
+
+            if (myConsultas.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-12 text-slate-400"><i class="fa-solid fa-calendar-xmark text-4xl mb-2"></i><p class="text-sm">Nenhum atendimento agendado para o filtro selecionado (UC12-FA01).</p></div>`;
+                return;
+            }
+
+            myConsultas.forEach(c => {
+                const paciente = state.users.find(u => u.id === c.pacienteId);
+
+                let statusBadge = '';
+                if (c.status === 'Agendada') statusBadge = '<span class="bg-cyan-100 text-cyan-800 text-[10px] font-bold px-2 py-0.5 rounded">Agendada</span>';
+                else if (c.status === 'Realizada') statusBadge = '<span class="bg-emeraldmed-100 text-emeraldmed-800 text-[10px] font-bold px-2 py-0.5 rounded">Realizada</span>';
+                else statusBadge = '<span class="bg-rose-100 text-rose-800 text-[10px] font-bold px-2 py-0.5 rounded">Cancelada</span>';
+
+                const actionsHTML = c.status === 'Agendada' ? `
+                    <div class="flex flex-wrap gap-1.5 pt-2 border-t border-slate-100">
+                        <button onclick="updateMedicoConsultaStatus('${c.id}', 'Realizada')" class="flex-1 bg-emeraldmed-600 hover:bg-emeraldmed-700 text-white text-[11px] font-semibold py-1.5 px-2.5 rounded-lg transition flex items-center justify-center space-x-1">
+                            <i class="fa-solid fa-check"></i>
+                            <span>Concluir Atendimento</span>
+                        </button>
+                        <button onclick="updateMedicoConsultaStatus('${c.id}', 'Cancelada')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-[11px] font-semibold py-1.5 px-2.5 rounded-lg transition flex items-center justify-center space-x-1">
+                            <i class="fa-solid fa-xmark"></i>
+                            <span>Cancelar</span>
+                        </button>
+                    </div>
+                ` : '';
+
+                container.innerHTML += `
+                    <div class="bg-white border border-emeraldmed-100 rounded-xl p-4 shadow-sm flex flex-col justify-between space-y-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-full bg-emeraldmed-50 border border-emeraldmed-200 flex items-center justify-center font-bold text-emeraldmed-700 text-sm shrink-0">
+                                    ${paciente ? paciente.name.charAt(0) : 'P'}
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <h4 class="font-bold text-slate-800 text-sm">${paciente ? paciente.name : 'Paciente'}</h4>
+                                        ${statusBadge}
+                                    </div>
+                                    <p class="text-xs text-slate-500 mt-0.5"><i class="fa-regular fa-calendar mr-1"></i>${c.data} às <strong>${c.hora}</strong></p>
+                                </div>
+                            </div>
+
+                            <button onclick="viewPacienteDetails('${c.pacienteId}')" class="bg-emeraldmed-50 hover:bg-emeraldmed-100 text-emeraldmed-700 text-xs font-semibold px-3 py-1.5 rounded-lg border border-emeraldmed-200 transition flex items-center space-x-1 shrink-0">
+                                <i class="fa-solid fa-address-card"></i>
+                                <span>Ficha (UC18/19)</span>
+                            </button>
+                        </div>
+                        ${actionsHTML}
+                    </div>
+                `;
+            });
+        }
+
+        function updateMedicoConsultaStatus(consultaId, novoStatus) {
+            const c = state.consultas.find(item => item.id === consultaId);
+            if (!c) return;
+            c.status = novoStatus;
+
+            if (novoStatus === 'Cancelada') {
+                const slot = state.slots.find(s => s.id === c.slotId);
+                if (slot) slot.status = 'disponivel';
+                showToast('Consulta cancelada pelo médico e horário liberado.', 'info');
+            } else if (novoStatus === 'Realizada') {
+                showToast('Atendimento marcado como Realizado com sucesso!', 'success');
+            }
+
+            renderMedicoAgenda();
+            renderMedicoSlots();
+            renderAdminConsultas();
+            renderAdminStats();
+        }
+
+        // Visualizar Informações do Paciente (UC18, UC19)
+        function viewPacienteDetails(pacienteId) {
+            const pac = state.users.find(u => u.id === pacienteId);
+            if (!pac) return;
+
+            document.getElementById('pac-modal-nome').innerText = pac.name;
+            document.getElementById('pac-modal-email').innerText = pac.email;
+            document.getElementById('pac-modal-cpf').innerText = pac.cpf || '-';
+            document.getElementById('pac-modal-tel').innerText = pac.phone || '-';
+
+            const histContainer = document.getElementById('pac-modal-historico');
+            histContainer.innerHTML = '';
+
+            const hist = state.consultas.filter(c => c.pacienteId === pacienteId);
+            if (hist.length === 0) {
+                histContainer.innerHTML = '<p class="text-[11px] text-slate-400">Nenhum histórico anterior registrado.</p>';
+            } else {
+                hist.forEach(h => {
+                    const doc = state.users.find(u => u.id === h.medicoId);
+                    histContainer.innerHTML += `
+                        <div class="text-[11px] flex justify-between py-1 border-b border-slate-100">
+                            <span>${h.data} às ${h.hora} (${doc ? doc.name : 'Médico'})</span>
+                            <span class="font-semibold text-slate-700">${h.status}</span>
+                        </div>
+                    `;
+                });
+            }
+
+            openModal('modal-paciente-info');
+        }
+
+        // Cadastrar Novos Horários (UC15)
+        function handleCadastrarHorarios(e) {
+            e.preventDefault();
+            const data = document.getElementById('new-slot-date').value;
+            const start = document.getElementById('new-slot-start').value;
+            const end = document.getElementById('new-slot-end').value;
+            const duration = parseInt(document.getElementById('new-slot-duration').value);
+
+            if (!data || !start || !end) return;
+
+            let [h, m] = start.split(':').map(Number);
+            let [endH, endM] = end.split(':').map(Number);
+
+            let addedCount = 0;
+            while (h < endH || (h === endH && m < endM)) {
+                const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                
+                const exists = state.slots.some(s => s.medicoId === state.currentUser.id && s.data === data && s.hora === timeStr);
+                if (!exists) {
+                    state.slots.push({
+                        id: 'slot_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                        medicoId: state.currentUser.id,
+                        data,
+                        hora: timeStr,
+                        status: 'disponivel'
+                    });
+                    addedCount++;
+                }
+
+                m += duration;
+                if (m >= 60) {
+                    h += Math.floor(m / 60);
+                    m = m % 60;
+                }
+            }
+
+            document.getElementById('filter-medico-slots-date').value = data;
+            showToast(`${addedCount} novos horários gerados com sucesso! (UC15)`, 'success');
+            renderMedicoSlots();
+        }
+
+        function generateWeekSlots() {
+            const horariosPadrao = ['08:00', '09:00', '10:00', '14:00', '15:00', '16:00'];
+            let added = 0;
+            for (let offset = 0; offset < 3; offset++) {
+                const dStr = getTodayDateString(offset);
+                horariosPadrao.forEach(hora => {
+                    const exists = state.slots.some(s => s.medicoId === state.currentUser.id && s.data === dStr && s.hora === hora);
+                    if (!exists) {
+                        state.slots.push({
+                            id: 'slot_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                            medicoId: state.currentUser.id,
+                            data: dStr,
+                            hora,
+                            status: 'disponivel'
+                        });
+                        added++;
+                    }
+                });
+            }
+            showToast(`${added} horários gerados para os próximos 3 dias!`, 'success');
+            renderMedicoSlots();
+        }
+
+        function renderMedicoSlots() {
+            const container = document.getElementById('medico-slots-grid');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const filterDate = document.getElementById('filter-medico-slots-date').value;
+            const mySlots = state.slots.filter(s => s.medicoId === state.currentUser.id && s.data === filterDate);
+
+            if (mySlots.length === 0) {
+                container.innerHTML = `<p class="col-span-full text-xs text-slate-400 italic text-center py-6">Nenhum horário cadastrado para esta data.</p>`;
+                return;
+            }
+
+            mySlots.forEach(s => {
+                let badgeClass = '';
+                if (s.status === 'disponivel') badgeClass = 'bg-emeraldmed-50 text-emeraldmed-700 border-emeraldmed-200';
+                else if (s.status === 'ocupado') badgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
+                else badgeClass = 'bg-slate-100 text-slate-500 border-slate-300';
+
+                container.innerHTML += `
+                    <div class="border rounded-xl p-3 flex flex-col justify-between ${badgeClass} text-xs space-y-2">
+                        <div class="flex justify-between items-center font-bold">
+                            <span><i class="fa-regular fa-clock mr-1"></i> ${s.hora}</span>
+                            <span class="capitalize text-[10px] px-1.5 py-0.5 rounded ${s.status === 'disponivel' ? 'bg-emeraldmed-200' : 'bg-slate-200'}">${s.status}</span>
+                        </div>
+
+                        ${s.status !== 'ocupado' ? `
+                            <div class="flex space-x-1 pt-1">
+                                ${s.status === 'disponivel' ? `
+                                    <button onclick="toggleBlockSlot('${s.id}', 'bloqueado')" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white rounded p-1 text-[10px] font-semibold">Bloquear (UC16)</button>
+                                ` : `
+                                    <button onclick="toggleBlockSlot('${s.id}', 'disponivel')" class="flex-1 bg-emeraldmed-600 hover:bg-emeraldmed-700 text-white rounded p-1 text-[10px] font-semibold">Desbloquear</button>
+                                `}
+                                <button onclick="deleteSlot('${s.id}')" class="bg-rose-500 hover:bg-rose-600 text-white rounded p-1 text-[10px]"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        ` : `<span class="text-[10px] text-blue-600 font-semibold italic">Possui Consulta</span>`}
+                    </div>
+                `;
+            });
+        }
+
+        // Bloquear Horário (UC16)
+        function toggleBlockSlot(slotId, newStatus) {
+            const slot = state.slots.find(s => s.id === slotId);
+            if (slot) {
+                if (slot.status === 'ocupado') {
+                    showToast('Horário já possui consulta confirmada! (UC16-FA01)', 'error');
+                    return;
+                }
+                slot.status = newStatus;
+                showToast(`Status do horário atualizado para: ${newStatus}`, 'info');
+                renderMedicoSlots();
+            }
+        }
+
+        // Cancelar Horário (UC17)
+        function deleteSlot(slotId) {
+            const slotIndex = state.slots.findIndex(s => s.id === slotId);
+            if (slotIndex > -1) {
+                const slot = state.slots[slotIndex];
+                if (slot.status === 'ocupado') {
+                    showToast('Existe consulta associada a este horário! (UC17-FA01)', 'error');
+                    return;
+                }
+                state.slots.splice(slotIndex, 1);
+                showToast('Horário removido com sucesso (UC17).', 'info');
+                renderMedicoSlots();
+            }
+        }
+
+
+        // ==================== ADMIN LOGIC (UC20 - UC27) ====================
+
+        // Gerenciar Usuários (UC20 - UC23)
+        function renderAdminUsers() {
+            const tbody = document.getElementById('admin-users-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            const search = document.getElementById('search-admin-user').value.toLowerCase();
+            const roleFilter = document.getElementById('filter-admin-user-role').value;
+
+            const filtered = state.users.filter(u => {
+                if (roleFilter && u.role !== roleFilter) return false;
+                if (search && !u.name.toLowerCase().includes(search) && !u.email.toLowerCase().includes(search) && !u.cpf.includes(search)) return false;
+                return true;
+            });
+
+            filtered.forEach(u => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-amethystadmin-50/30">
+                        <td class="p-3">
+                            <div class="font-bold text-slate-800">${u.name}</div>
+                            <div class="text-[11px] text-slate-400">${u.email}</div>
+                        </td>
+                        <td class="p-3 font-mono text-slate-600">${u.cpf || '-'}</td>
+                        <td class="p-3"><span class="capitalize px-2 py-0.5 rounded-full text-[10px] font-bold bg-amethystadmin-50 text-amethystadmin-700 border border-amethystadmin-200">${u.role}</span></td>
+                        <td class="p-3">
+                            ${u.active ? '<span class="text-emerald-600 font-semibold"><i class="fa-solid fa-circle text-[8px] mr-1"></i>Ativo</span>' : '<span class="text-rose-500 font-semibold"><i class="fa-solid fa-circle text-[8px] mr-1"></i>Inativo</span>'}
+                        </td>
+                        <td class="p-3 text-right space-x-1">
+                            <button onclick="editAdminUser('${u.id}')" class="text-slate-500 hover:text-amethystadmin-600 p-1"><i class="fa-solid fa-pen"></i> (UC22)</button>
+                            <button onclick="toggleUserActive('${u.id}')" class="${u.active ? 'text-rose-500 hover:text-rose-700' : 'text-emerald-500 hover:text-emerald-700'} p-1">
+                                <i class="fa-solid ${u.active ? 'fa-user-xmark' : 'fa-user-check'}"></i> (${u.active ? 'UC23' : 'Ativar'})
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function openNewUserModal() {
+            document.getElementById('modal-admin-user-title').innerText = 'Cadastrar Usuário (UC21)';
+            document.getElementById('admin-user-id').value = '';
+            document.getElementById('admin-user-nome').value = '';
+            document.getElementById('admin-user-email').value = '';
+            document.getElementById('admin-user-cpf').value = '';
+            openModal('modal-admin-user');
+        }
+
+        function editAdminUser(userId) {
+            const u = state.users.find(user => user.id === userId);
+            if (!u) return;
+
+            document.getElementById('modal-admin-user-title').innerText = 'Editar Usuário (UC22)';
+            document.getElementById('admin-user-id').value = u.id;
+            document.getElementById('admin-user-nome').value = u.name;
+            document.getElementById('admin-user-email').value = u.email;
+            document.getElementById('admin-user-cpf').value = u.cpf;
+            document.getElementById('admin-user-role').value = u.role;
+            openModal('modal-admin-user');
+        }
+
+        function handleSaveAdminUser(e) {
+            e.preventDefault();
+            const id = document.getElementById('admin-user-id').value;
+            const name = document.getElementById('admin-user-nome').value;
+            const email = document.getElementById('admin-user-email').value;
+            const cpf = document.getElementById('admin-user-cpf').value;
+            const role = document.getElementById('admin-user-role').value;
+
+            const duplicate = state.users.find(u => u.id !== id && (u.cpf === cpf || u.email === email));
+            if (duplicate) {
+                showToast('CPF ou E-mail já cadastrados por outro usuário! (UC21-FA01)', 'error');
+                return;
+            }
+
+            if (id) {
+                const u = state.users.find(user => user.id === id);
+                if (u) {
+                    u.name = name;
+                    u.email = email;
+                    u.cpf = cpf;
+                    u.role = role;
+                    showToast('Usuário atualizado com sucesso! (UC22)', 'success');
+                }
+            } else {
+                state.users.push({
+                    id: 'u_' + Date.now(),
+                    name, email, cpf, role, active: true,
+                    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80'
+                });
+                showToast('Novo usuário cadastrado com sucesso! (UC21)', 'success');
+            }
+
+            closeModal('modal-admin-user');
+            renderAdminUsers();
+            renderAdminMedicosAndEspecialidades();
+            renderAdminStats();
+        }
+
+        // Desativar Usuário (UC23)
+        function toggleUserActive(userId) {
+            const u = state.users.find(user => user.id === userId);
+            if (u) {
+                u.active = !u.active;
+                showToast(`Usuário ${u.active ? 'ativado' : 'desativado'} com sucesso (UC23).`, 'info');
+                renderAdminUsers();
+                renderAdminMedicosAndEspecialidades();
+                renderAdminStats();
+            }
+        }
+
+        // Gerenciar Médicos & Especialidades (UC24, UC25)
+        function renderAdminMedicosAndEspecialidades() {
+            const espList = document.getElementById('admin-especialidades-list');
+            if (espList) {
+                espList.innerHTML = '';
+                state.especialidades.forEach(e => {
+                    espList.innerHTML += `
+                        <li class="py-2.5 flex justify-between items-center text-xs">
+                            <span class="font-medium text-slate-700">${e.nome}</span>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded">ID: ${e.id}</span>
+                                <button onclick="deleteEspecialidade('${e.id}')" title="Remover Especialidade" class="text-slate-400 hover:text-rose-600 transition">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </li>
+                    `;
+                });
+            }
+
+            const tbody = document.getElementById('admin-medicos-table-body');
+            if (tbody) {
+                tbody.innerHTML = '';
+                const medicos = state.users.filter(u => u.role === 'medico');
+
+                medicos.forEach(m => {
+                    const esp = state.especialidades.find(e => e.id === m.especialidadeId);
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-amethystadmin-50/30">
+                            <td class="p-3 font-bold text-slate-800">${m.name}</td>
+                            <td class="p-3 font-mono text-slate-600">${m.crm || '-'}</td>
+                            <td class="p-3 text-amethystadmin-600 font-semibold">${esp ? esp.nome : '-'}</td>
+                            <td class="p-3">${m.active ? '<span class="text-emerald-600 font-semibold">Ativo</span>' : '<span class="text-rose-500 font-semibold">Inativo</span>'}</td>
+                            <td class="p-3 text-right">
+                                <button onclick="toggleUserActive('${m.id}')" class="text-xs text-slate-500 hover:text-amethystadmin-700 underline">Alterar Status</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        function deleteEspecialidade(espId) {
+            const emUso = state.users.some(u => u.role === 'medico' && u.especialidadeId === espId);
+            if (emUso) {
+                showToast('Não é possível remover: existem médicos vinculados a esta especialidade!', 'error');
+                return;
+            }
+            const idx = state.especialidades.findIndex(e => e.id === espId);
+            if (idx > -1) {
+                state.especialidades.splice(idx, 1);
+                showToast('Especialidade removida.', 'info');
+                populateEspecialidadeSelects();
+                renderAdminMedicosAndEspecialidades();
+            }
+        }
+
+        function openEspecialidadeModal() {
+            document.getElementById('esp-nome').value = '';
+            openModal('modal-admin-especialidade');
+        }
+
+        function handleSaveEspecialidade(e) {
+            e.preventDefault();
+            const nome = document.getElementById('esp-nome').value.trim();
+            if (!nome) return;
+
+            if (state.especialidades.some(esp => esp.nome.toLowerCase() === nome.toLowerCase())) {
+                showToast('Especialidade já cadastrada no sistema! (UC25-FA01)', 'error');
+                return;
+            }
+
+            state.especialidades.push({ id: 'esp_' + Date.now(), nome });
+            showToast('Especialidade cadastrada com sucesso! (UC25)', 'success');
+            closeModal('modal-admin-especialidade');
+            populateEspecialidadeSelects();
+            renderAdminMedicosAndEspecialidades();
+        }
+
+        function openMedicoModal() {
+            document.getElementById('med-nome').value = '';
+            document.getElementById('med-crm').value = '';
+            document.getElementById('med-email').value = '';
+
+            const sel = document.getElementById('med-esp');
+            sel.innerHTML = '';
+            state.especialidades.forEach(e => {
+                sel.innerHTML += `<option value="${e.id}">${e.nome}</option>`;
+            });
+
+            openModal('modal-admin-medico');
+        }
+
+        function handleSaveMedico(e) {
+            e.preventDefault();
+            const name = document.getElementById('med-nome').value;
+            const crm = document.getElementById('med-crm').value;
+            const email = document.getElementById('med-email').value;
+            const especialidadeId = document.getElementById('med-esp').value;
+
+            state.users.push({
+                id: 'u_' + Date.now(),
+                name, crm, email, especialidadeId, role: 'medico', active: true, cpf: '000.000.000-00',
+                avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=100&auto=format&fit=crop&q=80'
+            });
+
+            showToast('Médico cadastrado com sucesso! (UC24)', 'success');
+            closeModal('modal-admin-medico');
+            populateMedicoSelects();
+            renderAdminMedicosAndEspecialidades();
+            renderAdminStats();
+        }
+
+        // Visualizar Agendamentos (UC26) & Relatórios (UC27)
+        function renderAdminConsultas() {
+            const tbody = document.getElementById('admin-consultas-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            const status = document.getElementById('admin-filter-status').value;
+            const medicoId = document.getElementById('admin-filter-medico').value;
+            const espId = document.getElementById('admin-filter-especialidade').value;
+            const data = document.getElementById('admin-filter-data').value;
+
+            const filtered = state.consultas.filter(c => {
+                if (status && c.status !== status) return false;
+                if (medicoId && c.medicoId !== medicoId) return false;
+                if (espId && c.especialidadeId !== espId) return false;
+                if (data && c.data !== data) return false;
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">Nenhum agendamento encontrado para estes filtros (UC26-FA01).</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(c => {
+                const pac = state.users.find(u => u.id === c.pacienteId);
+                const doc = state.users.find(u => u.id === c.medicoId);
+                const esp = state.especialidades.find(e => e.id === c.especialidadeId);
+
+                let statusBadge = 'bg-amethystadmin-50 text-amethystadmin-700';
+                if (c.status === 'Realizada') statusBadge = 'bg-emerald-50 text-emerald-700';
+                if (c.status === 'Cancelada') statusBadge = 'bg-rose-50 text-rose-700';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-amethystadmin-50/30">
+                        <td class="p-3 font-semibold text-slate-700">${c.data} às ${c.hora}</td>
+                        <td class="p-3">${pac ? pac.name : '-'}</td>
+                        <td class="p-3 font-medium">${doc ? doc.name : '-'}</td>
+                        <td class="p-3 text-amethystadmin-600 font-medium">${esp ? esp.nome : '-'}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${statusBadge}">${c.status}</span></td>
+                        <td class="p-3 text-right">
+                            ${c.status === 'Agendada' ? `
+                                <button onclick="adminCancelConsulta('${c.id}')" class="text-[11px] text-rose-600 hover:underline font-semibold">Cancelar</button>
+                            ` : '<span class="text-[11px] text-slate-400">-</span>'}
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function adminCancelConsulta(consultaId) {
+            const c = state.consultas.find(item => item.id === consultaId);
+            if (!c) return;
+            c.status = 'Cancelada';
+            const slot = state.slots.find(s => s.id === c.slotId);
+            if (slot) slot.status = 'disponivel';
+            showToast('Agendamento cancelado pelo administrador.', 'info');
+            renderAdminConsultas();
+            renderAdminStats();
+        }
+
+        function renderAdminStats() {
+            const totalEl = document.getElementById('stat-total-consultas');
+            if (!totalEl) return;
+            totalEl.innerText = state.consultas.length;
+            document.getElementById('stat-consultas-ativas').innerText = state.consultas.filter(c => c.status === 'Agendada').length;
+            document.getElementById('stat-medicos-ativos').innerText = state.users.filter(u => u.role === 'medico' && u.active).length;
+            document.getElementById('stat-cancelamentos').innerText = state.consultas.filter(c => c.status === 'Cancelada').length;
+        }
+
+        function exportToCSV() {
+            const headers = ['ID', 'Data', 'Hora', 'Paciente', 'Medico', 'Especialidade', 'Status'];
+            const rows = state.consultas.map(c => {
+                const pac = state.users.find(u => u.id === c.pacienteId);
+                const doc = state.users.find(u => u.id === c.medicoId);
+                const esp = state.especialidades.find(e => e.id === c.especialidadeId);
+                return [
+                    c.id,
+                    c.data,
+                    c.hora,
+                    `"${pac ? pac.name : '-'}"`,
+                    `"${doc ? doc.name : '-'}"`,
+                    `"${esp ? esp.nome : '-'}"`,
+                    c.status
+                ].join(';');
+            });
+
+            const csvContent = '\uFEFF' + [headers.join(';'), ...rows].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `relatorio_consultas_medagenda_${getTodayDateString(0)}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            showToast('Relatório exportado para CSV com sucesso! (UC27)', 'success');
+        }
+
+
+        // ==================== AUTH & PROFILE MODALS (UC01, UC03) ====================
+
+        function openRegisterModal() { openModal('modal-register'); }
+        function openProfileModal() {
+            document.getElementById('prof-nome').value = state.currentUser.name;
+            document.getElementById('prof-email').value = state.currentUser.email;
+            document.getElementById('prof-telefone').value = state.currentUser.phone || '';
+            openModal('modal-profile');
+        }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            const nome = document.getElementById('reg-nome').value;
+            const cpf = document.getElementById('reg-cpf').value;
+            const email = document.getElementById('reg-email').value;
+            const phone = document.getElementById('reg-telefone').value;
+
+            if (state.users.some(u => u.cpf === cpf)) {
+                showToast('CPF já cadastrado no sistema! (UC01-FA02)', 'error');
+                return;
+            }
+            if (state.users.some(u => u.email === email)) {
+                showToast('E-mail já utilizado por outra conta! (UC01-FA03)', 'error');
+                return;
+            }
+
+            const newUser = {
+                id: 'u_' + Date.now(),
+                name: nome, cpf, email, phone, role: 'paciente', active: true,
+                avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80'
+            };
+
+            state.users.push(newUser);
+            closeModal('modal-register');
+            enterApp(newUser);
+            showToast('Conta criada com sucesso! Você está autenticado. (UC01)', 'success');
+        }
+
+        function handleUpdateProfile(e) {
+            e.preventDefault();
+            state.currentUser.name = document.getElementById('prof-nome').value;
+            state.currentUser.email = document.getElementById('prof-email').value;
+            state.currentUser.phone = document.getElementById('prof-telefone').value;
+
+            closeModal('modal-profile');
+            showToast('Perfil atualizado com sucesso! (UC03)', 'success');
+            updateUserInterface();
+        }
+
+
+        // ==================== UTILS & TOASTS ====================
+
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let colorClasses = 'bg-slate-800 text-white';
+            if (type === 'success') colorClasses = 'bg-emerald-600 text-white';
+            if (type === 'error') colorClasses = 'bg-rose-600 text-white';
+
+            toast.className = `${colorClasses} pointer-events-auto px-4 py-3 rounded-xl shadow-xl text-xs font-semibold flex items-center space-x-2 transition-all duration-300 transform translate-y-2 opacity-0`;
+            toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : (type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-info')} text-sm"></i><span>${message}</span>`;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+    </script>
+</body>
+</html>
